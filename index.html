@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P@piro.App</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #8ab4f8;
+            --border: rgba(128,128,128,0.15);
+            --bg-body: #000;
+            --text-body: white;
+            --mercado-pago: #009EE3;
+        }
+
+        body.light-mode { --bg-body: #f0f0f0; --text-body: #121212; }
+        
+        .bg-preto { background-color: #121212 !important; color: #e0e0e0 !important; }
+        .bg-bege { background-color: #f5f5dc !important; color: #2c2c2c !important; }
+        .bg-branco { background-color: #ffffff !important; color: #121212 !important; }
+
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; background: var(--bg-body); color: var(--text-body); transition: 0.3s; position: relative; }
+
+        .home-screen { height: 100vh; display: flex; flex-direction: column; padding: 20px; overflow-y: auto; box-sizing: border-box; padding-bottom: 120px; }
+        .top-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
+        
+        .pinned-list { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+        .note-card {
+            width: 100%; min-height: 70px; padding: 12px 20px; border-radius: 12px; 
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; position: relative; border: 1px solid var(--border); box-sizing: border-box;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .note-card h3 { margin: 0; font-size: 16px; font-weight: 500; text-align: center; width: 100%; opacity: 0.9; }
+        .pin-icon-ui { position: absolute; left: 15px; color: var(--accent); font-size: 18px; }
+
+        .donate-btn {
+            position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
+            background-color: var(--mercado-pago); color: white; border: none;
+            padding: 8px 18px; border-radius: 8px; display: flex; align-items: center;
+            gap: 10px; font-weight: 600; text-decoration: none; font-size: 13px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 400; transition: 0.2s;
+        }
+        .donate-btn:active { transform: translateX(-50%) scale(0.95); }
+
+        .drawer {
+            position: fixed; left: -310px; top: 0; width: 300px; height: 100%;
+            background: #1e1e1e; border-right: 1px solid var(--border);
+            z-index: 1000; display: flex; flex-direction: column; transition: 0.3s ease; color: white;
+        }
+        .drawer.active { left: 0; }
+        .menu-list { flex: 1; overflow-y: auto; }
+        .menu-item { padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; }
+
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; z-index: 900; }
+
+        .editor-screen { position: fixed; inset: 0; z-index: 2000; display: none; flex-direction: column; }
+        .editor-header { padding: 8px 15px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+        
+        .toolbar { 
+            display: flex; align-items: center; justify-content: center; gap: 4px; 
+            padding: 5px; background: rgba(128,128,128,0.08); border-bottom: 1px solid var(--border);
+            overflow-x: auto; white-space: nowrap;
+        }
+
+        .editor-body { flex: 1; padding: 15px; max-width: 800px; margin: 0 auto; width: 100%; box-sizing: border-box; overflow-y: auto; }
+        .title-field { width: 100%; background: none; border: none; font-size: 20px; font-weight: 600; outline: none; color: inherit; text-align: center; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+        
+        #textArea { width: 100%; min-height: 60vh; outline: none; font-size: 17px; line-height: 1.6; color: inherit; }
+
+        .fab { position: fixed; bottom: 85px; right: 25px; width: 50px; height: 50px; background: var(--accent); border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        
+        .icon-btn { background: none; border: none; color: inherit; cursor: pointer; padding: 5px; display: flex; align-items: center; border-radius: 4px; }
+        .icon-btn .material-icons { font-size: 20px; }
+        
+        select.font-select { background: none; border: 1px solid var(--border); color: inherit; font-size: 11px; padding: 2px; border-radius: 4px; outline: none; }
+    </style>
+</head>
+<body>
+
+    <div class="home-screen">
+        <div class="top-nav">
+            <button class="icon-btn" onclick="toggleMenu()"><span class="material-icons">menu</span></button>
+            <span style="font-size: 10px; letter-spacing: 2px; opacity: 0.5; font-weight: bold;">P@PIRO.APP</span>
+            <button class="icon-btn" onclick="toggleTheme()" title="Alternar Tema">
+                <span class="material-icons" id="themeIcon">brightness_4</span>
+            </button>
+        </div>
+        <div class="pinned-list" id="pinnedContainer"></div>
+    </div>
+
+    <a href="https://link.mercadopago.com.br/papiroapp" target="_blank" class="donate-btn">
+        <span class="material-icons" style="font-size: 20px;">handshake</span> Ajude esse projeto!
+    </a>
+
+    <button class="fab" onclick="abrirEditor()"><span class="material-icons" style="color:#000; font-size:24px;">add</span></button>
+
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+    <div class="drawer" id="drawer">
+        <div class="drawer-header" style="padding:20px; border-bottom:1px solid #333; font-weight: bold;">Arquivadas</div>
+        <div class="menu-list" id="menuContainer"></div>
+    </div>
+
+    <div class="editor-screen" id="editorScreen">
+        <header class="editor-header">
+            <button class="icon-btn" onclick="fecharEditor()"><span class="material-icons">arrow_back</span></button>
+            <div style="display:flex; gap:10px;">
+                <button class="icon-btn" onclick="copiarNota()" title="Copiar texto organizado"><span class="material-icons">content_copy</span></button>
+                <button class="icon-btn" onclick="salvarNota()"><span class="material-icons" style="color:var(--accent)">check_circle</span></button>
+            </div>
+        </header>
+
+        <div class="toolbar">
+            <select class="font-select" onchange="execCmd('fontName', this.value)" style="max-width: 80px;">
+                <option value="Arial">Arial</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Verdana">Verdana</option>
+                <option value="Times New Roman">Times</option>
+            </select>
+
+            <select class="font-select" onchange="execCmd('fontSize', this.value)" style="width: 45px;">
+                <option value="1">10</option>
+                <option value="2">13</option>
+                <option value="3" selected>16</option>
+                <option value="4">18</option>
+                <option value="5">24</option>
+                <option value="6">32</option>
+                <option value="7">48</option>
+            </select>
+            
+            <div style="width: 1px; height: 18px; background: var(--border); margin: 0 4px;"></div>
+
+            <button class="icon-btn" onmousedown="event.preventDefault(); execCmd('bold')"><span class="material-icons">format_bold</span></button>
+            <button class="icon-btn" onmousedown="event.preventDefault(); execCmd('italic')"><span class="material-icons">format_italic</span></button>
+            <button class="icon-btn" onmousedown="event.preventDefault(); execCmd('underline')"><span class="material-icons">format_underlined</span></button>
+
+            <button class="icon-btn" onmousedown="event.preventDefault(); document.getElementById('colorInput').click()"><span class="material-icons">opacity</span></button>
+            <button class="icon-btn" onclick="mudarFundoNota()"><span class="material-icons">format_color_fill</span></button>
+            
+            <input type="color" id="colorInput" style="display:none" onchange="execCmd('foreColor', this.value)">
+        </div>
+
+        <div class="editor-body">
+            <input type="text" id="editTitle" class="title-field" placeholder="Título">
+            <div id="textArea" contenteditable="true" spellcheck="false"></div>
+        </div>
+    </div>
+
+    <script>
+        let notes = [];
+        let currentId = null;
+        let currentNoteBg = 'bg-preto';
+
+        function sync() { notes = JSON.parse(localStorage.getItem('papiro_app_v5') || '[]'); }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            document.getElementById('themeIcon').innerText = isLight ? 'brightness_7' : 'brightness_4';
+        }
+
+        function execCmd(command, value = null) {
+            document.execCommand(command, false, value);
+            document.getElementById('textArea').focus();
+        }
+
+        async function copiarNota() {
+            const tituloOriginal = document.getElementById('editTitle').value || "Sem Título";
+            const tituloNegrito = "*" + tituloOriginal + "*";
+            const textoCorpo = document.getElementById('textArea').innerText;
+            const conteudoFinal = tituloNegrito + "\n\n" + textoCorpo;
+            
+            try {
+                await navigator.clipboard.writeText(conteudoFinal);
+                alert("Nota copiada com título em negrito!");
+            } catch (err) {
+                const tempInput = document.createElement("textarea");
+                tempInput.value = conteudoFinal;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempInput);
+                alert("Copiado com sucesso!");
+            }
+        }
+
+        function toggleMenu() {
+            const active = document.getElementById('drawer').classList.toggle('active');
+            document.getElementById('overlay').style.display = active ? 'block' : 'none';
+            if(active) renderMenu();
+        }
+
+        function abrirEditor(id = null) {
+            sync();
+            currentId = id || Date.now();
+            const note = notes.find(n => n.id === id);
+            document.getElementById('editTitle').value = note ? note.title : "";
+            document.getElementById('textArea').innerHTML = note ? note.content : "";
+            currentNoteBg = note ? (note.bg || 'bg-preto') : 'bg-preto';
+            document.getElementById('editorScreen').className = 'editor-screen ' + currentNoteBg;
+            document.getElementById('editorScreen').style.display = 'flex';
+        }
+
+        function mudarFundoNota() {
+            const cores = { 'bg-preto': 'bg-bege', 'bg-bege': 'bg-branco', 'bg-branco': 'bg-preto' };
+            currentNoteBg = cores[currentNoteBg];
+            document.getElementById('editorScreen').className = 'editor-screen ' + currentNoteBg;
+        }
+
+        function togglePinFromMenu(id) {
+            sync();
+            const note = notes.find(n => n.id === id);
+            if(note) {
+                note.pinned = !note.pinned;
+                localStorage.setItem('papiro_app_v5', JSON.stringify(notes));
+                renderMenu();
+                renderPinned();
+            }
+        }
+
+        function salvarNota() {
+            const title = document.getElementById('editTitle').value || "Sem Título";
+            const content = document.getElementById('textArea').innerHTML;
+            sync();
+            const existing = notes.find(n => n.id === currentId);
+            const noteData = { 
+                id: currentId, title, content, 
+                pinned: existing ? existing.pinned : false, 
+                bg: currentNoteBg, time: Date.now() 
+            };
+            const idx = notes.findIndex(n => n.id === currentId);
+            if(idx > -1) notes[idx] = noteData; else notes.push(noteData);
+            localStorage.setItem('papiro_app_v5', JSON.stringify(notes));
+            fecharEditor();
+        }
+
+        function fecharEditor() { 
+            document.getElementById('editorScreen').style.display = 'none'; 
+            renderPinned(); 
+        }
+
+        function renderPinned() {
+            sync();
+            const container = document.getElementById('pinnedContainer');
+            container.innerHTML = "";
+            const pinned = notes.filter(n => n.pinned).sort((a,b) => b.time - a.time);
+            pinned.forEach(n => {
+                const card = document.createElement('div');
+                card.className = `note-card ${n.bg || 'bg-preto'}`;
+                card.onclick = () => abrirEditor(n.id);
+                card.innerHTML = `<span class="material-icons pin-icon-ui">push_pin</span><h3>${n.title}</h3>`;
+                container.appendChild(card);
+            });
+        }
+
+        function renderMenu() {
+            sync();
+            const container = document.getElementById('menuContainer');
+            container.innerHTML = "";
+            notes.sort((a,b) => b.time - a.time).forEach(n => {
+                const item = document.createElement('div');
+                item.className = 'menu-item';
+                item.innerHTML = `
+                    <div class="menu-text" onclick="toggleMenu(); abrirEditor(${n.id})">
+                        <strong>${n.title}</strong>
+                    </div>
+                    <button class="icon-btn" onclick="togglePinFromMenu(${n.id})">
+                        <span class="material-icons" style="color:${n.pinned ? 'var(--accent)' : '#555'}">push_pin</span>
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        window.onload = renderPinned;
+    </script>
+</body>
+</html>
